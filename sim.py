@@ -1,19 +1,6 @@
 from config import *
+import tests
 
-
-def standard_config(natural=True, orb_types=None, minimum_counts=None) -> Config:
-    config = Config()
-    orb_types = orb_types or STANDARD_COLORS
-    if natural:
-        config.natural()
-        config.spawn_types = orb_types
-    else:
-        config.change(orb_types)
-
-    minimum_counts = minimum_counts or {}
-    config.require_minimum(minimum_counts)
-
-    return config
 
 def run_test(config: Config, print_tracking_info: bool = False):
     success = 0
@@ -33,28 +20,18 @@ def run_test(config: Config, print_tracking_info: bool = False):
         for orbs, counts in config.requirement_validator.accepted_results.items():
             print(orbs, counts)
 
+test_list = [
+    # tests.standard(),
+    # tests.fire3natural(),
+    # tests.fire3change(),
+    # tests.fire3heart3natural(),
+    # tests.fire3heart3change(),
+]
 
-print('standard, should be 100%')
-config = standard_config()
-run_test(config)
+test_list.extend(tests.reiwa_configs())
 
-print()
-print('Require 3 fire')
-config = standard_config(minimum_counts={'r': 3})
-run_test(config)
+for t in test_list:
+    print(t[0])
+    run_test(t[1])
+    print()
 
-print()
-print('Require 3 fire, orb change')
-config = standard_config(natural=False, minimum_counts={'r': 3})
-run_test(config)
-
-
-print()
-print('Require 3 fire 3 heart')
-config = standard_config(minimum_counts={'r': 3, 'h': 3})
-run_test(config)
-
-print()
-print('Require 3 fire 3 heart, orb change')
-config = standard_config(natural=False, minimum_counts={'r': 3, 'h': 3})
-run_test(config)
