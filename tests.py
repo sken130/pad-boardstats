@@ -22,23 +22,24 @@ def standard():
     return config, 'standard, should be 100%'
 
 
-def fire3natural():
-    config = standard_config(minimum_counts={'r': 3})
-    return config, 'Require 3 fire, natural board'
+def fire4natural():
+    config = standard_config(minimum_counts={'r': 4})
+    return config, 'Require 4 fire, natural board'
 
 
-def fire3change():
-    config = standard_config(natural=False, minimum_counts={'r': 3})
-    return config, 'Require 3 fire, orb change'
+def fire4change():
+    config = standard_config(natural=False, minimum_counts={'r': 4})
+    return config, 'Require 4 fire, orb change'
 
 
-def fire3heart3natural():
-    config = standard_config(minimum_counts={'r': 3, 'h': 3})
-    return config, 'Require 3 fire 3 heart, natural board'
+def fire4heart4natural():
+    config = standard_config(minimum_counts={'r': 4, 'h': 4})
+    return config, 'Require 4 fire 4 heart, natural board'
 
-def fire3heart3change():
-    config = standard_config(natural=False, minimum_counts={'r': 3, 'h': 3})
-    return config, 'Require 3 fire 3 heart, orb change'
+
+def fire4heart4change():
+    config = standard_config(natural=False, minimum_counts={'r': 4, 'h': 4})
+    return config, 'Require 4 fire 4 heart, orb change'
 
 
 def reiwa_configs():
@@ -46,7 +47,7 @@ def reiwa_configs():
     boards = [
         ('natural board', STANDARD_COLORS, True),
         ('5-color', NO_HEARTS, False),
-        ('reiwa-color', ['r', 'b', 'g', 'l'], False)
+        ('ygf (exact reiwa colors)', ['r', 'b', 'g', 'l'], False)
     ]
     requirements = {'r': 4, 'b': 4, 'g': 4, 'l': 4}
 

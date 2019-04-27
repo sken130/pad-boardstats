@@ -185,8 +185,8 @@ class StandardSpawnValidator(Validator):
 
         if self.require_one:
             counts = board.counts_by_type()
-            all_present = all([counts[x] for x in self.spawn_types])
-            if not all_present:
+            one_match_each = all([counts[x] >= 3 for x in self.spawn_types])
+            if not one_match_each:
                 return False
 
         return True
