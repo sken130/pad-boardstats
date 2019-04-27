@@ -3,6 +3,7 @@ from config import *
 
 def standard_config(natural=True, orb_types=None, minimum_counts=None) -> Config:
     config = Config()
+    config.report_every = 999999
     orb_types = orb_types or STANDARD_COLORS
     if natural:
         config.natural()
@@ -43,8 +44,9 @@ def fire3heart3change():
 def reiwa_configs():
     sizes = [(5, 6), (6, 7)]
     boards = [
-        ('5-color', NO_HEARTS),
-        ('reiwa-color', ['r', 'b', 'g', 'l'])
+        ('natural board', STANDARD_COLORS, True),
+        ('5-color', NO_HEARTS, False),
+        ('reiwa-color', ['r', 'b', 'g', 'l'], False)
     ]
     requirements = {'r': 4, 'b': 4, 'g': 4, 'l': 4}
 
@@ -52,7 +54,7 @@ def reiwa_configs():
     for size in sizes:
         for board in boards:
             desc = 'reiwa {}x{} {}'.format(size[0], size[1], board[0])
-            config = standard_config(natural=False, orb_types=board[1], minimum_counts=requirements)
+            config = standard_config(natural=board[2], orb_types=board[1], minimum_counts=requirements)
             config.board_rows = size[0]
             config.board_cols = size[1]
             configs.append((config, desc))
