@@ -1,22 +1,42 @@
+"""Configuration objects for the simulator.
+
+A config is needed, which comes mostly populated with defaults.
+
+You probably always want to use either natural() or change() on
+the config.
+
+You can use require_minimum() to set up a pretty standard search
+criteria. If you want something more complicated, follow the
+pattern there and configure your own requirement_validator.
+"""
+
 from collections import defaultdict
+import random
+from typing import List, Dict, Callable
+import json
 
-from typing import List
-
+# List of all the colors and an arbitrary index value.
 COLOR_MAP = {
-    'r': 1,
-    'g': 2,
-    'b': 3,
-    'l': 4,
-    'd': 5,
-    'h': 6,
-    'p': 7,
-    'm': 8,
-    'j': 9,
-    'o': 10,
+    'r': 1, # Red
+    'g': 2, # Green
+    'b': 3, # Blue
+    'l': 4, # Light
+    'd': 5, # Dark
+    'h': 6, # Heart
+    'p': 7, # Poison
+    'm': 8, # Mortal Poison
+    'j': 9, # Jammer
+    'o': 10, # Bomb
 }
 
-STANDARD_COLORS = ['r', 'g', 'b', 'l', 'd', 'h']
+# Just the five attack colors.
 NO_HEARTS = ['r', 'g', 'b', 'l', 'd']
+
+# Five attack colors and hearts
+STANDARD_COLORS = NO_HEARTS + ['h']
+
+# Standard typedef for types and their count in a board.
+CountsByType = Dict[str, int]
 
 
 class Board(object):
@@ -26,34 +46,61 @@ class Board(object):
 
         self.board_state = [0] * (cols * rows)
 
-    def counts_by_type(self) -> defaultdict[str, int]:
+    def counts_by_type(self) -> CountsByType:
         """Summary of orb counts by type."""
         counts = defaultdict(int)
         for x in self.board_state:
             counts[x] += 1
         return counts
 
-    def matches_by_type(self):
-        """Finds any matches in the board and reports them."""
-        pass
+    def any_matches(self, match_size: int) -> bool:
+        """Returns true if any match is found."""
+        for x in range(self.cols - match_size + 1):
+            for y in range(self.rows - match_size + 1):
+                orb = self._orb_at(x, y)
+                for x2 in range(x + 1, self.cols):
+                    if orb != self._orb_at(x2, y):
+                        break
+                    if x2 - x + 1 >= match_size:
+                        return True
+                for y2 in range(y + 1, self.rows):
+                    if orb != self._orb_at(x, y2):
+                        break
+                    if y2 - y + 1 >= match_size:
+                        return True
+
+        return False
+
+    def _orb_at(self, col, row) -> int:
+        return self.board_state[row * self.cols + col]
 
     def initialize(self, spawn_types: List[str]):
-        pass
+        for i in range(len(self.board_state)):
+            self.board_state[i] = random.choice(spawn_types)
 
+    def print_board(self):
+        for y in range(self.rows):
+            s = y * self.cols
+            e = s + self.cols
+            print(self.board_state[s:e])
 
 class Config(object):
     def __init__(self):
         # Number of iterations to test.
-        self.iterations = 10000
+        self.iterations = 50000
         # Print partial results this frequently.
-        self.report_every = 1000
+        self.report_every = 25000
 
         # Board columns.
         self.board_cols = 6
         # Board rows.
         self.board_rows = 5
 
+        # Used to confirm a randomly spawned board is acceptable.
         self.spawn_validator = AlwaysAccept()
+        # Number of times to attempt to create a random board. This is set
+        # excessively high; it should be pretty rare to hit this.
+        self.spawn_attempts = 1000
 
         # Orb types to spawn, from the list in COLOR_MAP.
         self.spawn_types = []
@@ -74,13 +121,25 @@ class Config(object):
         self.spawn_types = orb_types
         self.spawn_validator = OrbChangeSpawnValidator(orb_types)
 
+    def require_minimum(self, minimum_counts: CountsByType):
+        def remove_unused(input_counts: CountsByType):
+            return {k: v for k, v in input_counts.items() if k in minimum_counts}
+
+        def accept_minimum(input_counts: CountsByType):
+            return all([input_counts.get(t, 0) >= v for t, v in minimum_counts.items()])
+
+        self.requirement_validator = TrackingBoardValidator(accept_minimum,
+                                                            transform_fn=remove_unused)
+
     def new_board(self) -> Board:
-        for i in range(1000):
+        """Initialize a new board based on the configuration."""
+        for i in range(self.spawn_attempts):
             board = Board(self.board_cols, self.board_rows)
             board.initialize(self.spawn_types)
             if self.spawn_validator.validate(board):
                 return board
-        raise ValueError('Failed to create valid board in {} attempts'.format(i))
+
+        raise ValueError('Failed to create valid board in {} attempts'.format(self.spawn_attempts))
 
     def validate(self, board: Board) -> bool:
         return self.requirement_validator.validate(board)
@@ -121,7 +180,8 @@ class StandardSpawnValidator(Validator):
 
     def validate(self, board: Board) -> bool:
         if not self.accept_matches:
-            raise NotImplementedError()
+            if board.any_matches(self.match_size):
+                return False
 
         if self.require_one:
             counts = board.counts_by_type()
@@ -152,3 +212,34 @@ class OrbChangeSpawnValidator(StandardSpawnValidator):
                          match_size=0,
                          require_one=True,
                          spawn_types=spawn_types)
+
+
+class TrackingBoardValidator(Validator):
+    """Helper for building validators that keep track accepted board counts ."""
+
+    def __init__(self,
+                 accept_fn: Callable[[Dict[str, int]], bool],
+                 transform_fn: Callable[[CountsByType], CountsByType] = lambda x: x):
+        # Determines if the board configuration passes.
+        # The transformation function is applied first.
+        self.accept_fn = accept_fn
+
+        # An optional user-provided function for transforming the counts of each type.
+        # Applied before the accept_fn is run. Can be used to narrow down the tracked
+        # results if you expect a lot of different permutations, and you aren't
+        # interested in them.
+        self.transform_fn = transform_fn
+
+        # Tracking for transformed/accepted results.
+        self.accepted_results =  defaultdict(int)
+
+    def validate(self, board: Board) -> bool:
+        counts = board.counts_by_type()
+        counts = self.transform_fn(counts)
+        if self.accept_fn(counts):
+            self.accepted_results[self._flatten_counts(counts)] += 1
+            return True
+        return False
+
+    def _flatten_counts(self, counts) -> str:
+        return json.dumps(counts, sort_keys=True)
