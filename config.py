@@ -56,22 +56,26 @@ class Board(object):
     def any_matches(self, match_size: int) -> bool:
         """Returns true if any match is found."""
         for x in range(self.cols - match_size + 1):
-            for y in range(self.rows - match_size + 1):
-                orb = self._orb_at(x, y)
+            for y in range(self.rows):
+                orb = self.orb_at(x, y)
                 for x2 in range(x + 1, self.cols):
-                    if orb != self._orb_at(x2, y):
+                    if orb != self.orb_at(x2, y):
                         break
                     if x2 - x + 1 >= match_size:
                         return True
+
+        for y in range(self.rows - match_size + 1):
+            for x in range(self.cols):
+                orb = self.orb_at(x, y)
                 for y2 in range(y + 1, self.rows):
-                    if orb != self._orb_at(x, y2):
+                    if orb != self.orb_at(x, y2):
                         break
                     if y2 - y + 1 >= match_size:
                         return True
 
         return False
 
-    def _orb_at(self, col, row) -> int:
+    def orb_at(self, col, row) -> int:
         return self.board_state[row * self.cols + col]
 
     def initialize(self, spawn_types: List[str]):

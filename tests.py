@@ -22,6 +22,10 @@ def standard():
     return config, 'standard, should be 100%'
 
 
+def fire3natural():
+    config = standard_config(minimum_counts={'r': 3})
+    return config, 'Require 3 fire, natural board'
+
 def fire4natural():
     config = standard_config(minimum_counts={'r': 4})
     return config, 'Require 4 fire, natural board'
@@ -30,6 +34,11 @@ def fire4natural():
 def fire4change():
     config = standard_config(natural=False, minimum_counts={'r': 4})
     return config, 'Require 4 fire, orb change'
+
+
+def fire3heart3natural():
+    config = standard_config(minimum_counts={'r': 3, 'h': 3})
+    return config, 'Require 3 fire 3 heart, natural board'
 
 
 def fire4heart4natural():
