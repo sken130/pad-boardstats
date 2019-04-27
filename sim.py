@@ -21,17 +21,17 @@ def run_test(config: Config, print_tracking_info: bool = False):
             print(orbs, counts)
 
 test_list = [
-    # tests.standard(),
-    # tests.fire3natural(),
-    # tests.fire3change(),
-    # tests.fire3heart3natural(),
-    # tests.fire3heart3change(),
+    tests.standard(),
+    tests.fire3natural(),
+    tests.fire3change(),
+    tests.fire3heart3natural(),
+    tests.fire3heart3change(),
 ]
 
-test_list.extend(tests.reiwa_configs())
+# test_list.extend(tests.reiwa_configs())
 
 for t in test_list:
-    print(t[0])
-    run_test(t[1])
+    print(t[1])
+    run_test(t[0])
     print()
 

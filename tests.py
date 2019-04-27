@@ -55,6 +55,6 @@ def reiwa_configs():
             config = standard_config(natural=False, orb_types=board[1], minimum_counts=requirements)
             config.board_rows = size[0]
             config.board_cols = size[1]
-            configs.append((desc, config))
+            configs.append((config, desc))
     return configs
 
