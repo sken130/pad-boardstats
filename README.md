@@ -43,42 +43,30 @@ There is some discussion over the method PAD uses to generate boards,
 specifically regarding the 'minimum orb count'. It's a fact that every board
 change in PAD spawns at least 3 orbs of each color. 
 
-This library assumes boards are generated randomly, and then checked for
-validity; if invalid, a new board is generated. The alternative is to 'fix' 3
-orbs of each color and then randomly generate the rest of the orbs. Comparison
-of the two methods shows that you are more likely to get lower orb counts using
-this library; e.g. with a bicolor you are more likely to get a 3/27 split. This
-seems to fit my experience.
+The two options are:
+1) Generate a board, and then check if it is valid (3 orbs of each spawn)
+color. If not valid, regenerate until valid.
+2) Fix 3 orbs of each spawn color in the board, then randomly pick every
+other orb color.
 
+The first option results in a fatter tail distribution, the second a thinner
+one. E.g. with option 2, a bicolor will be significantly less likely to
+generate 3-4 orbs than with option 1. See the outputs below for another
+practical example.
+
+Some experimental testing by Shmifty on Discord points to the second option, so
+that is the default setting. To change this setting, adjust the value of
+`FORCE_FIXED_REQUIRED_ORBS` in `config.py`.
 
 ### Sample output
 
-Here is the output from the 'default' tests included:
+Here are the outputs for Reiwa:
 
 ```
-standard, should be 100%
-Done: 50000 success 0 fail, 100.00%
-
-Require 3 fire, natural board
-Done: 45659 success 4341 fail, 91.32%
-
-Require 4 fire, natural board
-Done: 39139 success 10861 fail, 78.28%
-
-Require 4 fire, orb change
-Done: 40499 success 9501 fail, 81.00%
-
-Require 3 fire 3 heart, natural board
-Done: 41739 success 8261 fail, 83.48%
-
-Require 4 fire 4 heart, natural board
-Done: 29909 success 20091 fail, 59.82%
-
-Require 4 fire 4 heart, orb change
-Done: 31941 success 18059 fail, 63.88%
-
 reiwa 5x6 natural board
 Done: 15704 success 34296 fail, 31.41%
+
+With FORCE_FIXED_REQUIRED_ORBS = False:
 
 reiwa 5x6 5-color
 Done: 32914 success 17086 fail, 65.83%
@@ -86,12 +74,11 @@ Done: 32914 success 17086 fail, 65.83%
 reiwa 5x6 ygf (exact reiwa colors)
 Done: 44387 success 5613 fail, 88.77%
 
-reiwa 6x7 natural board
-Done: 40430 success 9570 fail, 80.86%
+With FORCE_FIXED_REQUIRED_ORBS = True:
 
-reiwa 6x7 5-color
-Done: 47000 success 3000 fail, 94.00%
+reiwa 5x6 5-color
+Done: 43137 success 6863 fail, 86.27%
 
-reiwa 6x7 ygf (exact reiwa colors)
-Done: 49541 success 459 fail, 99.08%
+reiwa 5x6 ygf (exact reiwa colors)
+Done: 48903 success 1097 fail, 97.81%
 ```
