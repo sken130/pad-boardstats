@@ -126,6 +126,12 @@ class Config(object):
         self.spawn_validator = OrbChangeSpawnValidator(orb_types)
 
     def require_minimum(self, minimum_counts: CountsByType):
+        """Helper for setting up a requirement validator for orb counts.
+
+        Only accepts boards where the provided orb counts match or exceed
+        the values in the generated board.
+        Automatically trims the non-interesting orbs from tracking.
+        """
         def remove_unused(input_counts: CountsByType):
             return {k: v for k, v in input_counts.items() if k in minimum_counts}
 
