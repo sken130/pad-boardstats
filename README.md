@@ -22,7 +22,7 @@ config = standard_config(
 run_test(config)
 ```
 
-There are some sample tests already created. You can see the 
+### Getting Started
 
 For a quick start, check out `sim.py` which is the main driver, and `tests.py`
 for some example configurations.
@@ -37,7 +37,9 @@ sizes (defaults to 6x5).
 
 There are some unit tests in `validation.py`.
 
-NOTE! There is some discussion over the method PAD uses to generate boards,
+### Note about board generation
+
+There is some discussion over the method PAD uses to generate boards,
 specifically regarding the 'minimum orb count'. It's a fact that every board
 change in PAD spawns at least 3 orbs of each color. 
 
@@ -47,6 +49,9 @@ orbs of each color and then randomly generate the rest of the orbs. Comparison
 of the two methods shows that you are more likely to get lower orb counts using
 this library; e.g. with a bicolor you are more likely to get a 3/27 split. This
 seems to fit my experience.
+
+
+### Sample output
 
 Here is the output from the 'default' tests included:
 
