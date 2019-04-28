@@ -15,19 +15,10 @@ import random
 from typing import List, Dict, Callable
 import json
 
-# List of all the colors and an arbitrary index value.
-COLOR_MAP = {
-    'r': 1, # Red
-    'g': 2, # Green
-    'b': 3, # Blue
-    'l': 4, # Light
-    'd': 5, # Dark
-    'h': 6, # Heart
-    'p': 7, # Poison
-    'm': 8, # Mortal Poison
-    'j': 9, # Jammer
-    'o': 10, # Bomb
-}
+
+# If True and a board changed is used, changes board generation so 3 orbs of
+# each color are fixed and then the rest are randomly chosen.
+FORCE_FIXED_REQUIRED_ORBS = True
 
 # Just the five attack colors.
 NO_HEARTS = ['r', 'g', 'b', 'l', 'd']
@@ -187,6 +178,10 @@ class StandardSpawnValidator(Validator):
         self.require_one = require_one
         # Orb types that can spawn. Only used if require_one is set.
         self.spawn_types = spawn_types
+        # If True and require_one is set, uses an alternate method for generating the board.
+        # Instead of generating boards until one is acceptable, 3 orbs of each color are
+        # fixed and then the rest are randomly chosen.
+        self.fix_required_orbs = FORCE_FIXED_REQUIRED_ORBS
 
     def validate(self, board: Board) -> bool:
         if not self.accept_matches:
@@ -194,10 +189,14 @@ class StandardSpawnValidator(Validator):
                 return False
 
         if self.require_one:
-            counts = board.counts_by_type()
-            one_match_each = all([counts[x] >= 3 for x in self.spawn_types])
-            if not one_match_each:
-                return False
+            if self.fix_required_orbs:
+                for idx, st in enumerate(self.spawn_types):
+                    board.board_state[idx * 3: idx * 3 + 3] = [st] * 3
+            else:
+                counts = board.counts_by_type()
+                one_match_each = all([counts[x] >= 3 for x in self.spawn_types])
+                if not one_match_each:
+                    return False
 
         return True
 
