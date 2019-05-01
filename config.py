@@ -12,13 +12,9 @@ pattern there and configure your own requirement_validator.
 
 from collections import defaultdict
 import random
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Any
 import json
 
-
-# If True and a board changed is used, changes board generation so 3 orbs of
-# each color are fixed and then the rest are randomly chosen.
-FORCE_FIXED_REQUIRED_ORBS = True
 
 # Just the five attack colors.
 NO_HEARTS = ['r', 'g', 'b', 'l', 'd']
@@ -66,14 +62,27 @@ class Board(object):
 
         return False
 
-    def orb_at(self, col, row) -> int:
+    def orb_at(self, col, row) -> Any:
+        """Helper to retrieve the orb value at col/row."""
         return self.board_state[row * self.cols + col]
 
-    def initialize(self, spawn_types: List[str]):
+    def initialize(self, spawn_types: List[str], insert_one_match: bool):
+        """Initializes board_state.
+
+        Sets every orb to a random value from spawn_types.
+        If insert_one_match is set, three orbs for each type are set in the array,
+        and then the array is shuffled (matches PAD board behavior).
+        """
         for i in range(len(self.board_state)):
             self.board_state[i] = random.choice(spawn_types)
 
+        if insert_one_match:
+            for idx, st in enumerate(spawn_types):
+                self.board_state[idx * 3: idx * 3 + 3] = [st] * 3
+            random.shuffle(self.board_state)
+
     def print_board(self):
+        """Dumps the board state to the console (for debugging)."""
         for y in range(self.rows):
             s = y * self.cols
             e = s + self.cols
@@ -97,8 +106,10 @@ class Config(object):
         # excessively high; it should be pretty rare to hit this.
         self.spawn_attempts = 1000
 
-        # Orb types to spawn, from the list in COLOR_MAP.
+        # Orb types to spawn. Can be any unique values, but single characters are more readable.
         self.spawn_types = []
+        # If True, when the board is generated one match of each spawn type is inserted.
+        self.insert_one_match = False
 
         # The validator object which determines if a board matches the requirements.
         self.requirement_validator = AlwaysAccept()
@@ -136,7 +147,7 @@ class Config(object):
         """Initialize a new board based on the configuration."""
         for i in range(self.spawn_attempts):
             board = Board(self.board_cols, self.board_rows)
-            board.initialize(self.spawn_types)
+            board.initialize(self.spawn_types, self.insert_one_match)
             if self.spawn_validator.validate(board):
                 return board
 
@@ -178,10 +189,6 @@ class StandardSpawnValidator(Validator):
         self.require_one = require_one
         # Orb types that can spawn. Only used if require_one is set.
         self.spawn_types = spawn_types
-        # If True and require_one is set, uses an alternate method for generating the board.
-        # Instead of generating boards until one is acceptable, 3 orbs of each color are
-        # fixed and then the rest are randomly chosen.
-        self.fix_required_orbs = FORCE_FIXED_REQUIRED_ORBS
 
     def validate(self, board: Board) -> bool:
         if not self.accept_matches:
@@ -189,14 +196,10 @@ class StandardSpawnValidator(Validator):
                 return False
 
         if self.require_one:
-            if self.fix_required_orbs:
-                for idx, st in enumerate(self.spawn_types):
-                    board.board_state[idx * 3: idx * 3 + 3] = [st] * 3
-            else:
-                counts = board.counts_by_type()
-                one_match_each = all([counts[x] >= 3 for x in self.spawn_types])
-                if not one_match_each:
-                    return False
+            counts = board.counts_by_type()
+            one_match_each = all([counts[x] >= 3 for x in self.spawn_types])
+            if not one_match_each:
+                return False
 
         return True
 
@@ -250,5 +253,6 @@ class TrackingBoardValidator(Validator):
             return True
         return False
 
-    def _flatten_counts(self, counts) -> str:
+    @staticmethod
+    def _flatten_counts(counts) -> str:
         return json.dumps(counts, sort_keys=True)
