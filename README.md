@@ -1,5 +1,7 @@
 # pad-boardstats
 
+I am not the author. This is forked from https://github.com/nachoapps/pad-boardstats
+
 This is a library which simplifies the process of simulating boards and
 checking for how often conditions are met.
 
