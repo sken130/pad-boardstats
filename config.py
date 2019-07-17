@@ -120,11 +120,13 @@ class Config(object):
         if extra_types:
             types.update(extra_types)
         self.spawn_types = list(types)
+        self.insert_one_match = False
         self.spawn_validator = NaturalBoardSpawnValidator()
 
     def change(self, orb_types: List[str] = None):
         """Helper for setting up an orb change with specific orb types."""
         self.spawn_types = orb_types
+        self.insert_one_match = True
         self.spawn_validator = OrbChangeSpawnValidator(orb_types)
 
     def require_minimum(self, minimum_counts: CountsByType):
